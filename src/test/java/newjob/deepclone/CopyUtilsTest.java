@@ -5,6 +5,8 @@ import org.junit.jupiter.api.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 class CopyUtilsTest {
     Man originalMan;
     ObjectWithArrays original;
@@ -13,6 +15,12 @@ class CopyUtilsTest {
     @BeforeEach
     void setUp() {
         copyUtils = new CopyUtils();
+
+        List<String> favoriteBooks = new ArrayList<>();
+        favoriteBooks.add("How I do it?");
+        favoriteBooks.add("It is working");
+        originalMan = new Man("Zeus", 25, Sex.FEMALE, favoriteBooks);
+
     }
 
     @AfterEach
@@ -21,26 +29,66 @@ class CopyUtilsTest {
     }
 
     @Test
-    @DisplayName("Test Deep Copy")
-    void deepCopy() {
-        List<String> favoriteBooks = new ArrayList<>();
-        favoriteBooks.add("How I do it?");
-        favoriteBooks.add("It is working");
-        originalMan = new Man("Zeus", 25, Sex.FEMALE, favoriteBooks);
+    @DisplayName("Test Deep Copy Primitive Field Object")
+    void deepCopyPrimitiveFieldObject() {
+
+        Man copy = (Man) copyUtils.deepCopy(originalMan);
+
+        originalMan.setAge(28);
+
+        assertNotEquals(copy.getAge(), originalMan.getAge());
+    }
+
+    @Test
+    @DisplayName("Test Deep Copy String Field Object")
+    void deepCopyStringFieldObject() {
+
+        Man copy = (Man) copyUtils.deepCopy(originalMan);
+
+        originalMan.setName("Ares");
+
+        assertNotEquals(copy.getName(), originalMan.getName());
+    }
+
+    @Test
+    @DisplayName("Test Deep Copy Enum Field Object")
+    void deepCopyEnumFieldObject() {
+
+        Man copy = (Man) copyUtils.deepCopy(originalMan);
+
+        originalMan.setSex(Sex.MALE);
+
+        assertNotEquals(copy.getSex(), originalMan.getSex());
+    }
+
+    @Test
+    @DisplayName("Test Deep Copy Collection Field Object")
+    void deepCopyCollectionFieldObject() {
+
+        Man copy = (Man) copyUtils.deepCopy(originalMan);
+
+        originalMan.getFavoriteBooks().add("myths and reality");
+
+        assertNotEquals(copy.getFavoriteBooks(), originalMan.getFavoriteBooks());
+    }
+
+    @Test
+    @DisplayName("Test Deep Copy Object")
+    void deepCopyObject() {
 
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.setName("Ares");
         originalMan.setAge(28);
         originalMan.setSex(Sex.MALE);
-        favoriteBooks.add("myths and reality");
+        originalMan.getFavoriteBooks().add("myths and reality");
 
-        Assertions.assertNotEquals(copy, originalMan);
+        assertNotEquals(copy, originalMan);
     }
 
     @Test
     @DisplayName("Test Arrays Deep Copy")
-    void deepCopyObjectWithArrayFields() {
+    void deepCopyArrayFieldTest() {
         List<String> favoriteBooks = new ArrayList<>();
         favoriteBooks.add("How I do it?");
         favoriteBooks.add("It is working");
@@ -62,14 +110,14 @@ class CopyUtilsTest {
         man.setSex(Sex.FEMALE);
         man.setFavoriteBooks(null);
 
-        Assertions.assertNotEquals(copy, original);
+        assertNotEquals(copy, original);
     }
 
     @Test
     @DisplayName("Test Cached Exception")
     void throwsExceptionsTest() {
         originalMan = null;
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(IllegalArgumentException.class, () -> {
             copyUtils.deepCopy(originalMan);
         });
     }

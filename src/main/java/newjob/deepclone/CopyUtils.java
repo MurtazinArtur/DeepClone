@@ -60,7 +60,7 @@ public class CopyUtils {
         Map<Object, Object>copyCollection = (Map<Object, Object>) createNewObject(subObject);
 
        // subObject.forEach(getKeyFromValue());
-        
+
         return null;
     }
     private static Object getKeyFromValue(Map hm, Object value) {

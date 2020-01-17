@@ -28,6 +28,14 @@ public class CopyUtils {
         if (isNull.test(originalObject)) {
             throw new IllegalArgumentException("Original object must be not null for Deep Copy");
         }
+        if (!originalObject.getClass().isArray()){
+            String objectType = originalObject.getClass().getTypeName();
+            Class objectClass = getObjectClass(objectType);
+
+            if(objectClass.isPrimitive() || "String".equals(originalObject.getClass().getSimpleName())){
+                return originalObject;
+            }
+        }
 
         if (originalObject.getClass().isArray()) {
             return getCloneObjectOfArrayType(originalObject);
@@ -85,12 +93,12 @@ public class CopyUtils {
                             mapValue))), getMapValue(mapValue));
                 }
         );
+        
         return copyMap;
     }
 
     private Object getMapKey(Object mapKey) {
         Object copyMapKey;
-
         String mapKeyType = mapKey.getClass().getTypeName();
         Class mapKeyClass = getObjectClass(mapKeyType);
 
@@ -112,7 +120,6 @@ public class CopyUtils {
 
     private Object getMapValue(Object mapValue) {
         Object copyMapValue;
-
         String mapValueType = mapValue.getClass().getTypeName();
         Class mapValueClass = getObjectClass(mapValueType);
 
@@ -136,7 +143,6 @@ public class CopyUtils {
         Object copyObject;
         int arrayLength = Array.getLength(original);
         String theClassName = original.getClass().getComponentType().getTypeName();
-
         Class arrayClass = getArrayClass(theClassName);
 
         copyObject = Array.newInstance(arrayClass, arrayLength);

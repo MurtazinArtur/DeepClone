@@ -35,19 +35,36 @@ class CopyUtilsTest {
     void tearDown() {
         System.out.println("Test is finished ");
     }
-/*
 
-  @Test
-  void deepCopyPrimitiveObjectTest(){
-        int originalInt = 5;
+    @Test
+    @DisplayName("Test Deep Copy Primitive")
+    void deepCopyPrimitiveTest(){
+        int x = 5;
 
-        int copy = (int) copyUtils.deepCopy(originalInt);
+        int y = (int) copyUtils.deepCopy(x);
 
-        originalInt = 4;
+        x = 10;
 
-        assertNotEquals(originalInt, copy);
-  }
-*/
+        assertNotEquals(x, y);
+
+        System.out.println(x);
+        System.out.println(y);
+    }
+
+    @Test
+    @DisplayName("Test Deep Copy String")
+    void deepCopyStringTest(){
+        String originalString = "originalString";
+
+        String copy = (String) copyUtils.deepCopy(originalString);
+
+        originalString = "Testing String";
+
+        assertNotEquals(originalString, copy);
+
+        System.out.println(originalString);
+        System.out.println(copy);
+    }
 
     @Test
     @DisplayName("Test Deep Copy Array Of Primitives")

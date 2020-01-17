@@ -4,15 +4,16 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class CopyUtils {
     Predicate<Object> isNull = Objects::isNull;
+    Set<Object> deepCopyObjectSet = new HashSet<>();
+    boolean isThisObjectInTheSet;
+    Supplier<Stream<Object>> setStream;
 
     private static Object getKeyFromValue(Map originalMap, Object value) {
         for (Object mapKey : originalMap.keySet()) {
@@ -24,15 +25,14 @@ public class CopyUtils {
     }
 
     public Object deepCopy(Object originalObject) {
-
         if (isNull.test(originalObject)) {
             throw new IllegalArgumentException("Original object must be not null for Deep Copy");
         }
-        if (!originalObject.getClass().isArray()){
+        if (!originalObject.getClass().isArray()) {
             String objectType = originalObject.getClass().getTypeName();
             Class objectClass = getObjectClass(objectType);
 
-            if(objectClass.isPrimitive() || "String".equals(originalObject.getClass().getSimpleName())){
+            if (objectClass.isPrimitive() || "String".equals(originalObject.getClass().getSimpleName())) {
                 return originalObject;
             }
         }
@@ -45,39 +45,49 @@ public class CopyUtils {
             return getCloneObjectOfMapType(originalObject);
         }
 
-        Field[] originalObjectFields = originalObject.getClass().getDeclaredFields();
-        Object deepCopyObjectWithFields = createNewObject(originalObject);
-        Stream<Field> fieldStream = Arrays.stream(originalObjectFields);
-        Predicate<Field> isPrimitive = field -> field.getType().isPrimitive();
-        Predicate<Field> isString = field -> "String".equals(field.getType().getSimpleName());
-        Predicate<Field> isCollection = field -> Collection.class.isAssignableFrom(field.getType());
-        Predicate<Field> isArray = field -> field.getType().isArray();
-        Predicate<Field> isEnum = field -> field.getType().isEnum();
-        Predicate<Field> isMap = field -> Map.class.isAssignableFrom(field.getType());
+        if (!(deepCopyObjectSet.isEmpty())) {
+            setStream = (Supplier<Stream<Object>>) deepCopyObjectSet.stream();
+            isThisObjectInTheSet = setStream.get().noneMatch(originalObject::equals);
+        }else{
+            if (isThisObjectInTheSet) {
+                return setStream.get().filter(originalObject::equals).findAny().get();
+            } else {
+                Field[] originalObjectFields = originalObject.getClass().getDeclaredFields();
+                Object deepCopyObjectWithFields = createNewObject(originalObject);
+                Stream<Field> fieldStream = Arrays.stream(originalObjectFields);
+                Predicate<Field> isPrimitive = field -> field.getType().isPrimitive();
+                Predicate<Field> isString = field -> "String".equals(field.getType().getSimpleName());
+                Predicate<Field> isCollection = field -> Collection.class.isAssignableFrom(field.getType());
+                Predicate<Field> isArray = field -> field.getType().isArray();
+                Predicate<Field> isEnum = field -> field.getType().isEnum();
+                Predicate<Field> isMap = field -> Map.class.isAssignableFrom(field.getType());
 
-        fieldStream.forEach(field -> {
-            field.setAccessible(true);
-            if (!isNull.test(deepCopyObjectWithFields)) {
-                if (isNull.test(getFieldValue(field, originalObject))) {
-                    insertValue(deepCopyObjectWithFields, field, null);
-                } else if (isString.or(isPrimitive).or(isEnum).test(field)) {
-                    insertValue(deepCopyObjectWithFields, field, getFieldValue(field, originalObject));
-                } else if (isCollection.test(field)) {
-                    insertValue(deepCopyObjectWithFields, field,
-                            getCloneObjectOfCollectionType(getFieldValue(field, originalObject)));
-                } else if (isArray.test(field)) {
-                    insertValue(deepCopyObjectWithFields, field,
-                            getCloneObjectOfArrayType(getFieldValue(field, originalObject)));
-                } else if (isMap.test(field)) {
-                    insertValue(deepCopyObjectWithFields, field,
-                            getCloneObjectOfMapType(getFieldValue(field, originalObject)));
-                } else {
-                    insertValue(deepCopyObjectWithFields, field, deepCopy(getFieldValue(field, originalObject)));
-                }
+                fieldStream.forEach(field -> {
+                    field.setAccessible(true);
+                    if (!isNull.test(deepCopyObjectWithFields)) {
+                        if (isNull.test(getFieldValue(field, originalObject))) {
+                            insertValue(deepCopyObjectWithFields, field, null);
+                        } else if (isString.or(isPrimitive).or(isEnum).test(field)) {
+                            insertValue(deepCopyObjectWithFields, field, getFieldValue(field, originalObject));
+                        } else if (isCollection.test(field)) {
+                            insertValue(deepCopyObjectWithFields, field,
+                                    getCloneObjectOfCollectionType(getFieldValue(field, originalObject)));
+                        } else if (isArray.test(field)) {
+                            insertValue(deepCopyObjectWithFields, field,
+                                    getCloneObjectOfArrayType(getFieldValue(field, originalObject)));
+                        } else if (isMap.test(field)) {
+                            insertValue(deepCopyObjectWithFields, field,
+                                    getCloneObjectOfMapType(getFieldValue(field, originalObject)));
+                        } else {
+                            insertValue(deepCopyObjectWithFields, field, deepCopy(getFieldValue(field, originalObject)));
+                        }
+                    }
+                });
+                deepCopyObjectSet.add(deepCopyObjectWithFields);
+                return deepCopyObjectWithFields;
             }
-        });
-
-        return deepCopyObjectWithFields;
+        }
+        return null;
     }
 
     private Object getCloneObjectOfMapType(Object original) {

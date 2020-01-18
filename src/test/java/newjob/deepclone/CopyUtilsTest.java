@@ -11,9 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CopyUtilsTest {
-    Man originalMan;
-    ObjectWithArrays originalArray;
     CopyUtils copyUtils;
+    Man originalMan;
+    Man manTwo;
+    ObjectWithArrays originalArray;
+    int[] ints = {1, 2, 3};
+    String[] strings = {"Земля", "Вода"};
+    Man[] mans;
 
     @BeforeEach
     void setUp() {
@@ -22,13 +26,24 @@ class CopyUtilsTest {
         List<String> originalList = new ArrayList<>();
         originalList.add("How I do it?");
         originalList.add("It is working");
-        originalMan = new Man("Zeus", 25, Sex.FEMALE, originalList);
+        originalMan = new Man();
+        originalMan.setName("Zeus");
+        originalMan.setAge(25);
+        originalMan.setSex(Sex.FEMALE);
+        originalMan.setFavoriteBooks(originalList);
 
-        Man manTwo = new Man("Ares", 28, Sex.MALE, originalList);
-        int[] ints = {1, 2, 3};
-        String[] strings = {"Земля", "Вода"};
-        Man[] mans = {originalMan, manTwo};
-        originalArray = new ObjectWithArrays(ints, strings, mans);
+        manTwo = new Man();
+        manTwo.setName("Ares");
+        manTwo.setAge(28);
+        manTwo.setSex(Sex.MALE);
+        manTwo.setFavoriteBooks(originalList);
+
+        mans = new Man[]{originalMan, manTwo};
+
+        originalArray = new ObjectWithArrays();
+        originalArray.setTestPrimitiveArray(ints);
+        originalArray.setTestStringArray(strings);
+        originalArray.setTestObjectArray(mans);
     }
 
     @AfterEach
@@ -38,8 +53,10 @@ class CopyUtilsTest {
 
     @Test
     @DisplayName("Test Deep Copy Primitive")
-    void deepCopyPrimitiveTest(){
+    void deepCopyPrimitiveTest() {
         int x = 5;
+
+        System.out.println("Original primitive: " + x);
 
         int y = (int) copyUtils.deepCopy(x);
 
@@ -47,14 +64,16 @@ class CopyUtilsTest {
 
         assertNotEquals(x, y);
 
-        System.out.println(x);
-        System.out.println(y);
+        System.out.println("Changed original primitive: " + x);
+        System.out.println("Deep Copy primitive: " + y);
     }
 
     @Test
     @DisplayName("Test Deep Copy String")
-    void deepCopyStringTest(){
+    void deepCopyStringTest() {
         String originalString = "originalString";
+
+        System.out.println("Original string: " + originalString);
 
         String copy = (String) copyUtils.deepCopy(originalString);
 
@@ -62,14 +81,14 @@ class CopyUtilsTest {
 
         assertNotEquals(originalString, copy);
 
-        System.out.println(originalString);
-        System.out.println(copy);
+        System.out.println("Changed original string: " + originalString);
+        System.out.println("Deep Copy string: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Array Of Primitives")
     void deepCopyArrayOfPrimitivesTest() {
-        int[] ints = {1, 2, 3};
+        System.out.println("Original primitive array: " + Arrays.toString(ints));
 
         int[] copy = (int[]) copyUtils.deepCopy(ints);
 
@@ -77,14 +96,14 @@ class CopyUtilsTest {
 
         assertNotEquals(ints, copy);
 
-        System.out.println("Original array " + Arrays.toString(ints));
-        System.out.println("Deep Copy array " + Arrays.toString(copy));
+        System.out.println("Changed original primitive array: " + Arrays.toString(ints));
+        System.out.println("Deep Copy primitive array: " + Arrays.toString(copy));
     }
 
     @Test
     @DisplayName("Test Deep Copy Array Of Strings")
     void deepCopyArrayOfStringsTest() {
-        String[] strings = {"Земля", "Вода"};
+        System.out.println("Original string array: " + Arrays.toString(strings));
 
         String[] copy = (String[]) copyUtils.deepCopy(strings);
 
@@ -93,15 +112,14 @@ class CopyUtilsTest {
 
         assertNotEquals(strings, copy);
 
-        System.out.println("Original array " + Arrays.toString(strings));
-        System.out.println("Deep Copy array " + Arrays.toString(copy));
+        System.out.println("Changed original string array: " + Arrays.toString(strings));
+        System.out.println("Deep Copy string array: " + Arrays.toString(copy));
     }
 
     @Test
     @DisplayName("Test Deep Copy Array Of Objects")
     void deepCopyArrayOfObjectsTest() {
-        Man manTwo = new Man("Ares", 28, Sex.MALE, null);
-        Man[] mans = {originalMan, manTwo};
+        System.out.println("Original object array: " + Arrays.toString(mans));
 
         Man[] copy = (Man[]) copyUtils.deepCopy(mans);
 
@@ -113,16 +131,19 @@ class CopyUtilsTest {
 
         assertNotEquals(mans, copy);
 
-        System.out.println("Original array " + Arrays.toString(mans));
-        System.out.println("Deep Copy array " + Arrays.toString(copy));
+        System.out.println("Changed original object array: " + Arrays.toString(mans));
+        System.out.println("Deep Copy object array: " + Arrays.toString(copy));
     }
 
     @Test
     @DisplayName("Test Deep Copy Collection Of Primitives")
     void deepCopyCollectionOfPrimitivesTest() {
-        List<Integer> originalList = new ArrayList();
+        List<Integer> originalList = new ArrayList<>();
         originalList.add(1);
         originalList.add(2);
+
+        System.out.println("Original primitive collection: " + originalList);
+
         List copy = (List) copyUtils.deepCopy(originalList);
         ListIterator<Integer> listIterator = originalList.listIterator();
 
@@ -133,16 +154,18 @@ class CopyUtilsTest {
 
         assertNotEquals(copy, originalList);
 
-        System.out.println("Original collection " + originalList);
-        System.out.println("DeepCopy collection " + copy);
+        System.out.println("Changed original primitive collection: " + originalList);
+        System.out.println("DeepCopy primitive collection: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Collection Of Strings")
     void deepCopyCollectionOfStringsTest() {
-        List<String> originalList = new ArrayList();
+        List<String> originalList = new ArrayList<>();
         originalList.add("How I do it?");
         originalList.add("It is working");
+
+        System.out.println("Original string collection: " + originalList);
 
         List copy = (List) copyUtils.deepCopy(originalList);
         ListIterator<String> listIterator = originalList.listIterator();
@@ -154,18 +177,19 @@ class CopyUtilsTest {
 
         assertNotEquals(copy, originalList);
 
-        System.out.println("Original collection " + originalList);
-        System.out.println("DeepCopy collection " + copy);
+        System.out.println("Changed original string collection: " + originalList);
+        System.out.println("DeepCopy string collection: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Collection Of Objects")
     void deepCopyCollectionOfObjectsTest() {
         List<Man> originalList = new ArrayList<>();
-        Man manTwo = new Man("Ares", 28, Sex.MALE, null);
 
         originalList.add(originalMan);
         originalList.add(manTwo);
+
+        System.out.println("Original object collection: " + originalList);
 
         List copy = (List) copyUtils.deepCopy(originalList);
 
@@ -176,8 +200,8 @@ class CopyUtilsTest {
 
         assertNotEquals(copy, originalList);
 
-        System.out.println("Original collection " + originalList);
-        System.out.println("DeepCopy collection " + copy);
+        System.out.println("Changed original object collection: " + originalList);
+        System.out.println("DeepCopy object collection: " + copy);
     }
 
     @Test
@@ -186,14 +210,17 @@ class CopyUtilsTest {
         Map<Integer, Integer> originalMap = new HashMap<>();
         originalMap.put(0, 1);
         originalMap.put(1, 2);
+
+        System.out.println("Original primitive map: " + originalMap);
+
         Map copy = (Map) copyUtils.deepCopy(originalMap);
 
         originalMap.put(1, 3);
 
         assertNotEquals(copy, originalMap);
 
-        System.out.println("Original map " + originalMap);
-        System.out.println("DeepCopy map " + copy);
+        System.out.println("Changed original primitive map: " + originalMap);
+        System.out.println("DeepCopy primitive map: " + copy);
     }
 
     @Test
@@ -203,14 +230,16 @@ class CopyUtilsTest {
         originalMap.put("One", "How I do it?");
         originalMap.put("Two", "It is working");
 
+        System.out.println("Original string map: " + originalMap);
+
         Map copy = (Map) copyUtils.deepCopy(originalMap);
 
         originalMap.put("One", "Testing String");
 
         assertNotEquals(copy, originalMap);
 
-        System.out.println("Original map " + originalMap);
-        System.out.println("DeepCopy map " + copy);
+        System.out.println("Changed original string map: " + originalMap);
+        System.out.println("DeepCopy string map: " + copy);
     }
 
 
@@ -218,10 +247,11 @@ class CopyUtilsTest {
     @DisplayName("Test Deep Copy Map Of Objects")
     void deepCopyMapOfObjectsTest() {
         Map<Man, Man> originalMap = new HashMap<>();
-        Man manTwo = new Man("Ares", 28, Sex.MALE, null);
 
         originalMap.put(originalMan, manTwo);
         originalMap.put(manTwo, originalMan);
+
+        System.out.println("Original object map: " + originalMap);
 
         Map copy = (Map) copyUtils.deepCopy(originalMap);
 
@@ -234,65 +264,75 @@ class CopyUtilsTest {
 
         assertNotEquals(copy, originalMap);
 
-        System.out.println("Original map " + originalMap);
-        System.out.println("DeepCopy map " + copy);
+        System.out.println("Changed original object map: " + originalMap);
+        System.out.println("DeepCopy object map: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Primitive Field Object")
     void deepCopyPrimitiveFieldObject() {
+        System.out.println("Original object: " + originalMan);
+
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.setAge(28);
 
         assertNotEquals(copy.getAge(), originalMan.getAge());
 
-        System.out.println("Original object " + originalMan);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalMan);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy String Field Object")
     void deepCopyStringFieldObject() {
+        System.out.println("Original object: " + originalMan);
+
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.setName("Ares");
 
         assertNotEquals(copy.getName(), originalMan.getName());
 
-        System.out.println("Original object " + originalMan);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalMan);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Enum Field Object")
     void deepCopyEnumFieldObject() {
+        System.out.println("Original object: " + originalMan);
+
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.setSex(Sex.MALE);
 
         assertNotEquals(copy.getSex(), originalMan.getSex());
 
-        System.out.println("Original object " + originalMan);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalMan);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Collection Field Object")
     void deepCopyCollectionFieldObject() {
+        System.out.println("Original object: " + originalMan);
+
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.getFavoriteBooks().add("myths and reality");
 
         assertNotEquals(copy.getFavoriteBooks(), originalMan.getFavoriteBooks());
 
-        System.out.println("Original object " + originalMan);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalMan);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Deep Copy Object")
     void deepCopyObject() {
+        System.out.println("Original object: " + originalMan);
+
         Man copy = (Man) copyUtils.deepCopy(originalMan);
 
         originalMan.setName("Ares");
@@ -302,26 +342,30 @@ class CopyUtilsTest {
 
         assertNotEquals(copy, originalMan);
 
-        System.out.println("Original object " + originalMan);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalMan);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Field Array Of Primitives Deep Copy")
     void deepCopyFieldArrayOfPrimitivesTest() {
+        System.out.println("Original object: " + originalArray);
+
         ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
 
         originalArray.setTestPrimitiveArray(new int[]{4, 5, 6});
 
         assertNotEquals(copy.getTestPrimitiveArray(), originalArray.getTestPrimitiveArray());
 
-        System.out.println("Original object " + originalArray);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalArray);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Field Array Of Strings Deep Copy")
     void deepCopyFieldArrayOfStringsTest() {
+        System.out.println("Original object: " + originalArray);
+
         ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
 
         originalArray.getTestStringArray()[0] = "Воздух";
@@ -329,13 +373,15 @@ class CopyUtilsTest {
 
         assertNotEquals(copy.getTestStringArray(), originalArray.getTestStringArray());
 
-        System.out.println("Original object " + originalArray);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalArray);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
     @DisplayName("Test Field Array Of Objects Deep Copy")
     void deepCopyFieldArrayOfObjectsTest() {
+        System.out.println("Original object: " + originalArray);
+
         ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
 
         Man man = (Man) originalArray.getTestObjectArray()[1];
@@ -346,8 +392,8 @@ class CopyUtilsTest {
 
         assertNotEquals(copy.getTestObjectArray(), originalArray.getTestObjectArray());
 
-        System.out.println("Original object " + originalArray);
-        System.out.println("DeepCopy object " + copy);
+        System.out.println("Changed original object: " + originalArray);
+        System.out.println("DeepCopy object: " + copy);
     }
 
     @Test
@@ -360,26 +406,4 @@ class CopyUtilsTest {
             copyUtils.deepCopy(originalMan);
         });
     }
-
-    @Test
-    @DisplayName("Test Cached Exception")
-    void throwsExceptionsPrimitiveObjectTest() {
-        int originalInt = 5;
-
-        assertThrows(IllegalArgumentException.class, () -> {
-
-            copyUtils.deepCopy(originalInt);
-        });
-    }
-/*
-    @Test
-    @DisplayName("Test Cached Exception")
-    void throwsExceptionsStringObjectTest() {
-        String originalString = "Testing String";
-
-        assertThrows(IllegalArgumentException.class, () -> {
-
-            copyUtils.deepCopy(originalString);
-        });
-    }*/
 }

@@ -7,12 +7,6 @@ public class ObjectWithArrays {
     private String[] testStringArray;
     private Object[] testObjectArray;
 
-    public ObjectWithArrays(int[] testPrimitiveArray, String[] testStringArray, Object[] testObjectArray) {
-        this.testPrimitiveArray = testPrimitiveArray;
-        this.testStringArray = testStringArray;
-        this.testObjectArray = testObjectArray;
-    }
-
     public ObjectWithArrays() {
     }
 

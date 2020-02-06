@@ -9,7 +9,15 @@ class Man {
     private Sex sex;
     private List<String> favoriteBooks;
 
-    public Man() {
+    public Man(String name, int age, Sex sex, List<String> favoriteBooks) {
+        this.name = name;
+        this.age = age;
+        this.sex = sex;
+        this.favoriteBooks = favoriteBooks;
+    }
+
+    public Man(int age) {
+        this.age = age;
     }
 
     public String getName() {

@@ -9,11 +9,11 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public class CopyUtils {
-    Predicate<Object> isNull = Objects::isNull;
-    Set<Object> deepCopyObjectSet = new HashSet<>();
-    Supplier<Stream<Object>> streamSupplier = () -> deepCopyObjectSet.stream();
-    boolean isThisObjectInTheSet = false;
+class CopyUtils {
+    private static Predicate<Object> isNull = Objects::isNull;
+    private static Set<Object> deepCopyObjectSet = new HashSet<>();
+    private static Supplier<Stream<Object>> streamSupplier = () -> deepCopyObjectSet.stream();
+    private static boolean isThisObjectInTheSet = false;
 
     private static Object getKeyFromValue(Map originalMap, Object value) {
         for (Object mapKey : originalMap.keySet()) {
@@ -21,12 +21,12 @@ public class CopyUtils {
                 return mapKey;
             }
         }
-        return null;
+        throw new DeepCopyException("Error while Map get key from value for copy");
     }
 
-    public Object deepCopy(Object originalObject) {
+    static Object deepCopy(Object originalObject) {
         if (isNull.test(originalObject)) {
-            throw new IllegalArgumentException("Original object must be not null for Deep Copy");
+            throw new DeepCopyException("Original object must be not null for Deep Copy");
         }
 
         if (!originalObject.getClass().isArray()) {
@@ -40,7 +40,8 @@ public class CopyUtils {
         if (originalObject.getClass().isArray()) {
             return getCloneObjectOfArrayType(originalObject);
         } else if (Collection.class.isAssignableFrom(originalObject.getClass())) {
-            return getCloneObjectOfCollectionType(originalObject);
+            Object cloneObjectOfCollectionType = getCloneObjectOfCollectionType(originalObject);
+            return cloneObjectOfCollectionType;
         } else if (Map.class.isAssignableFrom(originalObject.getClass())) {
             return getCloneObjectOfMapType(originalObject);
         }
@@ -89,9 +90,9 @@ public class CopyUtils {
         }
     }
 
-    private Object getCloneObjectOfMapType(Object original) {
+    private static Object getCloneObjectOfMapType(Object original) {
         Map<Object, Object> originalMap = (Map<Object, Object>) original;
-        Map<Object, Object> copyMap = (Map<Object, Object>) createNewObject(originalMap);
+        Map<Object, Object> copyMap = createNewObject(originalMap);
         Collection mapValues = originalMap.values();
         Stream mapValuesStream = mapValues.stream();
 
@@ -106,7 +107,7 @@ public class CopyUtils {
         return copyMap;
     }
 
-    private Object getMapKey(Object mapKey) {
+    private static Object getMapKey(Object mapKey) {
         Object copyMapKey;
         String mapKeyType = mapKey.getClass().getTypeName();
         Class mapKeyClass = getObjectClass(mapKeyType);
@@ -127,7 +128,7 @@ public class CopyUtils {
         return copyMapKey;
     }
 
-    private Object getMapValue(Object mapValue) {
+    private static Object getMapValue(Object mapValue) {
         Object copyMapValue;
         String mapValueType = mapValue.getClass().getTypeName();
         Class mapValueClass = getObjectClass(mapValueType);
@@ -148,11 +149,11 @@ public class CopyUtils {
         return copyMapValue;
     }
 
-    private Object getCloneObjectOfArrayType(Object original) {
+    private static Object getCloneObjectOfArrayType(Object original) {
         Object copyObject;
         int arrayLength = Array.getLength(original);
         String theClassName = original.getClass().getComponentType().getTypeName();
-        Class arrayClass = getArrayClass(theClassName);
+        Class arrayClass = getObjectClass(theClassName);
 
         copyObject = Array.newInstance(arrayClass, arrayLength);
 
@@ -167,9 +168,9 @@ public class CopyUtils {
         return copyObject;
     }
 
-    private Object getCloneObjectOfCollectionType(Object original) {
+    private static Object getCloneObjectOfCollectionType(Object original) {
         Collection<Object> subObject = (Collection<Object>) original;
-        Collection<Object> copyCollection = (Collection<Object>) createNewObject(subObject);
+        Collection<Object> copyCollection = createNewObject(subObject);
         Object collectionItem = subObject.iterator().next();
         String collectionType = collectionItem.getClass().getTypeName();
         Class collectionClass = getObjectClass(collectionType);
@@ -191,21 +192,56 @@ public class CopyUtils {
         }
     }
 
-    private Object createNewObject(Object original) {
+    private static <T> T createNewObject(Object original) {
+        Constructor[] declaredConstructors = original.getClass().getDeclaredConstructors();
         try {
-            Constructor constructor = original.getClass().getDeclaredConstructor();
-            constructor.setAccessible(true);
-
-            return constructor.newInstance();
-
-        } catch (IllegalAccessException | NoSuchMethodException | InstantiationException | InvocationTargetException e) {
-            e.printStackTrace();
+            if (hasDefaultConstructor(declaredConstructors)) {
+                return createNewObjectWithDefaultConstructor(original);
+            } else {
+                return createNewObjectWithOutDefaultConstructor(original, declaredConstructors[0]);
+            }
+        } catch (IllegalAccessException | InvocationTargetException | InstantiationException
+                | NoSuchMethodException e) {
+            throw new DeepCopyException("Error while create new instance for copy", e);
         }
-
-        return null;
     }
 
-    private void insertValue(Object clone, Field cloningField, Object copySubObject) {
+    private static <T> T createNewObjectWithDefaultConstructor(Object original) throws IllegalAccessException,
+            InvocationTargetException, InstantiationException, NoSuchMethodException {
+
+        Constructor declaredConstructor = original.getClass().getDeclaredConstructor();
+        declaredConstructor.setAccessible(true);
+
+        return (T) declaredConstructor.newInstance();
+
+    }
+
+    private static <T> T createNewObjectWithOutDefaultConstructor(Object original, Constructor objectConstructor) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+        Field[] objectFields = original.getClass().getDeclaredFields();
+        List<Object> fieldsValue = new ArrayList<>();
+
+        for (Field field : objectFields) {
+            field.setAccessible(true);
+            if (field.getType().isPrimitive()) {
+                fieldsValue.add(0);
+            } else {
+                fieldsValue.add(null);
+            }
+        }
+
+        return (T) objectConstructor.newInstance(fieldsValue.toArray());
+    }
+
+    private static boolean hasDefaultConstructor(Constructor[] constructors) {
+        for (Constructor constructor : constructors) {
+            if (constructor.getGenericParameterTypes().length == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void insertValue(Object clone, Field cloningField, Object copySubObject) {
         try {
             Field deepCopyObjectField = clone.getClass().getDeclaredField(cloningField.getName());
             deepCopyObjectField.setAccessible(true);
@@ -213,72 +249,54 @@ public class CopyUtils {
             deepCopyObjectField.set(clone, copySubObject);
 
         } catch (NoSuchFieldException | IllegalAccessException e) {
-            e.printStackTrace();
+            throw new DeepCopyException("Error while insert the copy value to field for copy", e);
         }
     }
 
-    private Object getFieldValue(Field field, Object object) {
+    private static Object getFieldValue(Field field, Object object) {
         try {
-
             return field.get(object);
         } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            throw new DeepCopyException("Error while getting the value of field for copy", e);
         }
-
-        return null;
     }
 
-    private Class getArrayClass(String className) {
+    private static Class<?> getObjectClass(String className) {
         try {
             switch (className) {
                 case "byte":
                     return byte.class;
+                case "java.lang.Byte":
+                    return byte.class;
                 case "short":
+                    return short.class;
+                case "java.lang.Short":
                     return short.class;
                 case "int":
                     return int.class;
+                case "java.lang.Integer":
+                    return int.class;
                 case "long":
+                    return long.class;
+                case "java.lang.Long":
                     return long.class;
                 case "double":
                     return double.class;
+                case "java.lang.Double":
+                    return double.class;
                 case "float":
+                    return float.class;
+                case "java.lang.Float":
                     return float.class;
                 case "char":
                     return char.class;
-                default:
-                    return Class.forName(className);
-            }
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
-
-        return null;
-    }
-
-    private Class getObjectClass(String className) {
-        try {
-            switch (className) {
-                case "java.lang.Byte":
-                    return byte.class;
-                case "java.lang.Short":
-                    return short.class;
-                case "java.lang.Integer":
-                    return int.class;
-                case "java.lang.Long":
-                    return long.class;
-                case "java.lang.Double":
-                    return double.class;
-                case "java.lang.Float":
-                    return float.class;
                 case "java.lang.Character":
                     return char.class;
                 default:
                     return Class.forName(className);
             }
         } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            throw new DeepCopyException("Error while getting the instance class name for copy", e);
         }
-
-        return null;
     }
 }

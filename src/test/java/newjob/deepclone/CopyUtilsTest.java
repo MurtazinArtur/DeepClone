@@ -11,13 +11,13 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CopyUtilsTest {
-    CopyUtils copyUtils;
-    Man originalMan;
-    Man manTwo;
-    ObjectWithArrays originalArray;
-    int[] ints = {1, 2, 3};
-    String[] strings = {"Земля", "Вода"};
-    Man[] mans;
+    private CopyUtils copyUtils;
+    private Man originalMan;
+    private Man manTwo;
+    private ObjectWithArrays originalArray;
+    private int[] ints = {1, 2, 3};
+    private String[] strings = {"Земля", "Вода"};
+    private Man[] mans;
 
     @BeforeEach
     void setUp() {
@@ -26,17 +26,8 @@ class CopyUtilsTest {
         List<String> originalList = new ArrayList<>();
         originalList.add("How I do it?");
         originalList.add("It is working");
-        originalMan = new Man();
-        originalMan.setName("Zeus");
-        originalMan.setAge(25);
-        originalMan.setSex(Sex.FEMALE);
-        originalMan.setFavoriteBooks(originalList);
-
-        manTwo = new Man();
-        manTwo.setName("Ares");
-        manTwo.setAge(28);
-        manTwo.setSex(Sex.MALE);
-        manTwo.setFavoriteBooks(originalList);
+        originalMan = new Man("Zeus", 25, Sex.FEMALE, originalList);
+        manTwo = new Man("Ares", 28, Sex.MALE, originalList);
 
         mans = new Man[]{originalMan, manTwo};
 
@@ -401,7 +392,7 @@ class CopyUtilsTest {
     void throwsExceptionsNullObjectTest() {
         originalMan = null;
 
-        assertThrows(IllegalArgumentException.class, () -> {
+        assertThrows(DeepCopyException.class, () -> {
 
             copyUtils.deepCopy(originalMan);
         });

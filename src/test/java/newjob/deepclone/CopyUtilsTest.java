@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -49,7 +50,9 @@ class CopyUtilsTest {
 
         System.out.println("Original primitive: " + x);
 
-        int y = (int) copyUtils.deepCopy(x);
+        int y = CopyUtils.deepCopy(x);
+
+        assertEquals(x, y);
 
         x = 10;
 
@@ -66,7 +69,9 @@ class CopyUtilsTest {
 
         System.out.println("Original string: " + originalString);
 
-        String copy = (String) copyUtils.deepCopy(originalString);
+        String copy = CopyUtils.deepCopy(originalString);
+
+        assertEquals(originalString, copy);
 
         originalString = "Testing String";
 
@@ -81,7 +86,9 @@ class CopyUtilsTest {
     void deepCopyArrayOfPrimitivesTest() {
         System.out.println("Original primitive array: " + Arrays.toString(ints));
 
-        int[] copy = (int[]) copyUtils.deepCopy(ints);
+        int[] copy = CopyUtils.deepCopy(ints);
+
+        assertEquals(ints, copy);
 
         ints = new int[]{4, 5, 6};
 
@@ -96,7 +103,9 @@ class CopyUtilsTest {
     void deepCopyArrayOfStringsTest() {
         System.out.println("Original string array: " + Arrays.toString(strings));
 
-        String[] copy = (String[]) copyUtils.deepCopy(strings);
+        String[] copy = CopyUtils.deepCopy(strings);
+
+        assertEquals(strings, copy);
 
         strings[0] = "Воздух";
         strings[1] = "Огонь";
@@ -112,7 +121,9 @@ class CopyUtilsTest {
     void deepCopyArrayOfObjectsTest() {
         System.out.println("Original object array: " + Arrays.toString(mans));
 
-        Man[] copy = (Man[]) copyUtils.deepCopy(mans);
+        Man[] copy = CopyUtils.deepCopy(mans);
+
+        assertEquals(mans, copy);
 
         Man man = mans[1];
         man.setName("Hermes");
@@ -135,7 +146,10 @@ class CopyUtilsTest {
 
         System.out.println("Original primitive collection: " + originalList);
 
-        List copy = (List) copyUtils.deepCopy(originalList);
+        List copy = CopyUtils.deepCopy(originalList);
+
+        assertEquals(copy, originalList);
+
         ListIterator<Integer> listIterator = originalList.listIterator();
 
         if (listIterator.hasNext()) {
@@ -158,7 +172,10 @@ class CopyUtilsTest {
 
         System.out.println("Original string collection: " + originalList);
 
-        List copy = (List) copyUtils.deepCopy(originalList);
+        List copy = CopyUtils.deepCopy(originalList);
+
+        assertEquals(copy, originalList);
+
         ListIterator<String> listIterator = originalList.listIterator();
 
         if (listIterator.hasNext()) {
@@ -182,7 +199,9 @@ class CopyUtilsTest {
 
         System.out.println("Original object collection: " + originalList);
 
-        List copy = (List) copyUtils.deepCopy(originalList);
+        List copy = CopyUtils.deepCopy(originalList);
+
+        assertEquals(copy, originalList);
 
         manTwo.setName("Hermes");
         manTwo.setAge(33);
@@ -204,7 +223,9 @@ class CopyUtilsTest {
 
         System.out.println("Original primitive map: " + originalMap);
 
-        Map copy = (Map) copyUtils.deepCopy(originalMap);
+        Map copy = CopyUtils.deepCopy(originalMap);
+
+        assertEquals(copy, originalMap);
 
         originalMap.put(1, 3);
 
@@ -223,7 +244,9 @@ class CopyUtilsTest {
 
         System.out.println("Original string map: " + originalMap);
 
-        Map copy = (Map) copyUtils.deepCopy(originalMap);
+        Map copy = CopyUtils.deepCopy(originalMap);
+
+        assertEquals(copy, originalMap);
 
         originalMap.put("One", "Testing String");
 
@@ -244,7 +267,9 @@ class CopyUtilsTest {
 
         System.out.println("Original object map: " + originalMap);
 
-        Map copy = (Map) copyUtils.deepCopy(originalMap);
+        Map copy = CopyUtils.deepCopy(originalMap);
+
+        assertEquals(copy, originalMap);
 
         manTwo.setName("Hermes");
         manTwo.setAge(33);
@@ -264,7 +289,9 @@ class CopyUtilsTest {
     void deepCopyPrimitiveFieldObject() {
         System.out.println("Original object: " + originalMan);
 
-        Man copy = (Man) copyUtils.deepCopy(originalMan);
+        Man copy = CopyUtils.deepCopy(originalMan);
+
+        assertEquals(copy.getAge(), originalMan.getAge());
 
         originalMan.setAge(28);
 
@@ -279,7 +306,9 @@ class CopyUtilsTest {
     void deepCopyStringFieldObject() {
         System.out.println("Original object: " + originalMan);
 
-        Man copy = (Man) copyUtils.deepCopy(originalMan);
+        Man copy = CopyUtils.deepCopy(originalMan);
+
+        assertEquals(copy.getName(), originalMan.getName());
 
         originalMan.setName("Ares");
 
@@ -294,7 +323,9 @@ class CopyUtilsTest {
     void deepCopyEnumFieldObject() {
         System.out.println("Original object: " + originalMan);
 
-        Man copy = (Man) copyUtils.deepCopy(originalMan);
+        Man copy = CopyUtils.deepCopy(originalMan);
+
+        assertEquals(copy.getSex(), originalMan.getSex());
 
         originalMan.setSex(Sex.MALE);
 
@@ -309,7 +340,9 @@ class CopyUtilsTest {
     void deepCopyCollectionFieldObject() {
         System.out.println("Original object: " + originalMan);
 
-        Man copy = (Man) copyUtils.deepCopy(originalMan);
+        Man copy = CopyUtils.deepCopy(originalMan);
+
+        assertEquals(copy.getFavoriteBooks(), originalMan.getFavoriteBooks());
 
         originalMan.getFavoriteBooks().add("myths and reality");
 
@@ -324,7 +357,9 @@ class CopyUtilsTest {
     void deepCopyObject() {
         System.out.println("Original object: " + originalMan);
 
-        Man copy = (Man) copyUtils.deepCopy(originalMan);
+        Man copy = CopyUtils.deepCopy(originalMan);
+
+        assertEquals(copy, originalMan);
 
         originalMan.setName("Ares");
         originalMan.setAge(28);
@@ -342,7 +377,9 @@ class CopyUtilsTest {
     void deepCopyFieldArrayOfPrimitivesTest() {
         System.out.println("Original object: " + originalArray);
 
-        ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
+        ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
+
+        assertEquals(copy.getTestPrimitiveArray(), originalArray.getTestPrimitiveArray());
 
         originalArray.setTestPrimitiveArray(new int[]{4, 5, 6});
 
@@ -357,7 +394,9 @@ class CopyUtilsTest {
     void deepCopyFieldArrayOfStringsTest() {
         System.out.println("Original object: " + originalArray);
 
-        ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
+        ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
+
+        assertEquals(copy.getTestStringArray(), originalArray.getTestStringArray());
 
         originalArray.getTestStringArray()[0] = "Воздух";
         originalArray.getTestStringArray()[1] = "Огонь";
@@ -373,7 +412,9 @@ class CopyUtilsTest {
     void deepCopyFieldArrayOfObjectsTest() {
         System.out.println("Original object: " + originalArray);
 
-        ObjectWithArrays copy = (ObjectWithArrays) copyUtils.deepCopy(originalArray);
+        ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
+
+        assertEquals(copy.getTestObjectArray(), originalArray.getTestObjectArray());
 
         Man man = (Man) originalArray.getTestObjectArray()[1];
         man.setName("Hermes");
@@ -394,7 +435,7 @@ class CopyUtilsTest {
 
         assertThrows(DeepCopyException.class, () -> {
 
-            copyUtils.deepCopy(originalMan);
+            CopyUtils.deepCopy(originalMan);
         });
     }
 }

@@ -5,100 +5,79 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 class CopyUtils {
-    private static Predicate<Object> isNull = Objects::isNull;
-    private static Set<Object> deepCopyObjectSet = new HashSet<>();
-    private static Supplier<Stream<Object>> streamSupplier = () -> deepCopyObjectSet.stream();
-    private static boolean isThisObjectInTheSet = false;
 
-    private static Object getKeyFromValue(Map originalMap, Object value) {
-        for (Object mapKey : originalMap.keySet()) {
-            if (originalMap.get(mapKey).equals(value)) {
-                return mapKey;
-            }
-        }
-        throw new DeepCopyException("Error while Map get key from value for copy");
-    }
+    static <T> T deepCopy(T originalObject) {
+        Set<T> deepCopyObjectSet = new HashSet<>();
+        Supplier<Stream<T>> streamSupplier = () -> (Stream<T>) deepCopyObjectSet.stream();
+        boolean copyObject = false;
 
-    static Object deepCopy(Object originalObject) {
-        if (isNull.test(originalObject)) {
+        if (isNull(originalObject)) {
             throw new DeepCopyException("Original object must be not null for Deep Copy");
         }
 
-        if (!originalObject.getClass().isArray()) {
-            String objectType = originalObject.getClass().getTypeName();
-            Class objectClass = getObjectClass(objectType);
-            if (objectClass.isPrimitive() || "String".equals(originalObject.getClass().getSimpleName())) {
-                return originalObject;
-            }
-        }
-
-        if (originalObject.getClass().isArray()) {
-            return getCloneObjectOfArrayType(originalObject);
-        } else if (Collection.class.isAssignableFrom(originalObject.getClass())) {
-            Object cloneObjectOfCollectionType = getCloneObjectOfCollectionType(originalObject);
-            return cloneObjectOfCollectionType;
-        } else if (Map.class.isAssignableFrom(originalObject.getClass())) {
-            return getCloneObjectOfMapType(originalObject);
+        if (isObjectPrimitiveOrString(getObjectClass(originalObject.getClass().getName()))) {
+            return originalObject;
         }
 
         if (!(deepCopyObjectSet.isEmpty())) {
-            isThisObjectInTheSet = streamSupplier.get().anyMatch(originalObject::equals);
+            copyObject = streamSupplier.get().anyMatch(originalObject::equals);
         }
 
-        if (isThisObjectInTheSet) {
+        if (copyObject) {
             return streamSupplier.get().filter(originalObject::equals).findAny().get();
         } else {
-            Field[] originalObjectFields = originalObject.getClass().getDeclaredFields();
-            Object deepCopyObjectWithFields = createNewObject(originalObject);
-            Stream<Field> fieldStream = Arrays.stream(originalObjectFields);
-            Predicate<Field> isPrimitive = field -> field.getType().isPrimitive();
-            Predicate<Field> isString = field -> "String".equals(field.getType().getSimpleName());
-            Predicate<Field> isCollection = field -> Collection.class.isAssignableFrom(field.getType());
-            Predicate<Field> isArray = field -> field.getType().isArray();
-            Predicate<Field> isEnum = field -> field.getType().isEnum();
-            Predicate<Field> isMap = field -> Map.class.isAssignableFrom(field.getType());
 
-            fieldStream.forEach(field -> {
-                field.setAccessible(true);
-                if (!isNull.test(deepCopyObjectWithFields)) {
-                    if (isNull.test(getFieldValue(field, originalObject))) {
-                        insertValue(deepCopyObjectWithFields, field, null);
-                    } else if (isString.or(isPrimitive).or(isEnum).test(field)) {
-                        insertValue(deepCopyObjectWithFields, field, getFieldValue(field, originalObject));
-                    } else if (isCollection.test(field)) {
-                        insertValue(deepCopyObjectWithFields, field,
-                                getCloneObjectOfCollectionType(getFieldValue(field, originalObject)));
-                    } else if (isArray.test(field)) {
-                        insertValue(deepCopyObjectWithFields, field,
-                                getCloneObjectOfArrayType(getFieldValue(field, originalObject)));
-                    } else if (isMap.test(field)) {
-                        insertValue(deepCopyObjectWithFields, field,
-                                getCloneObjectOfMapType(getFieldValue(field, originalObject)));
-                    } else {
-                        insertValue(deepCopyObjectWithFields, field, deepCopy(getFieldValue(field, originalObject)));
-                    }
-                }
-            });
-
-            deepCopyObjectSet.add(deepCopyObjectWithFields);
-            return deepCopyObjectWithFields;
+            if (isObjectArrayOrCollection(getObjectClass(originalObject.getClass().getName()))) {
+                return getObjectArrayOrCollectionType(originalObject);
+            }
         }
+
+        Field[] originalObjectFields = originalObject.getClass().getDeclaredFields();
+        T deepCopyObjectWithFields = createNewObject(originalObject);
+
+        Arrays.stream(originalObjectFields).forEach(field -> {
+            field.setAccessible(true);
+            if (!isNull(deepCopyObjectWithFields)) {
+                if (isNull(getFieldValue(field, originalObject))) {
+                    insertValue(deepCopyObjectWithFields, field, null);
+                } else if (isObjectPrimitiveOrString(getObjectClass(field.getType().getName()))
+                        || field.getType().isEnum()) {
+                    insertValue(deepCopyObjectWithFields, field, getFieldValue(field, originalObject));
+                } else if (field.getType().isArray()) {
+                    insertValue(deepCopyObjectWithFields, field,
+                            getCloneObjectOfArrayType(getFieldValue(field, originalObject)));
+                } else {
+                    insertValue(deepCopyObjectWithFields, field, deepCopy(getFieldValue(field, originalObject)));
+                }
+            }
+        });
+
+        deepCopyObjectSet.add(deepCopyObjectWithFields);
+        return deepCopyObjectWithFields;
     }
 
-    private static Object getCloneObjectOfMapType(Object original) {
-        Map<Object, Object> originalMap = (Map<Object, Object>) original;
-        Map<Object, Object> copyMap = createNewObject(originalMap);
-        Collection mapValues = originalMap.values();
-        Stream mapValuesStream = mapValues.stream();
+    private static <T> T getObjectArrayOrCollectionType(T originalObject) {
+        if (originalObject.getClass().isArray()) {
+            return getCloneObjectOfArrayType(originalObject);
+        } else if (Collection.class.isAssignableFrom(originalObject.getClass())) {
+            return (T) getCloneObjectOfCollectionType(originalObject);
+        } else if (Map.class.isAssignableFrom(originalObject.getClass())) {
+            return (T) getCloneObjectOfMapType(originalObject);
+        }
+        throw new DeepCopyException("Error! Collection " + originalObject.getClass() + " can not copy");
+    }
 
-        mapValuesStream.forEach(
+    private static <V, K, T> Map<K, V> getCloneObjectOfMapType(T original) {
+        Map<K, V> originalMap = (Map<K, V>) original;
+        Map<K, V> copyMap = createNewObject(originalMap);
+
+        originalMap.values().forEach(
                 mapValue -> {
-                    assert !isNull.test(copyMap);
+                    assert !isNull(copyMap);
                     copyMap.put(getMapKey(Objects.requireNonNull(getKeyFromValue(originalMap,
                             mapValue))), getMapValue(mapValue));
                 }
@@ -107,57 +86,14 @@ class CopyUtils {
         return copyMap;
     }
 
-    private static Object getMapKey(Object mapKey) {
-        Object copyMapKey;
-        String mapKeyType = mapKey.getClass().getTypeName();
-        Class mapKeyClass = getObjectClass(mapKeyType);
-
-        if (mapKeyClass.isPrimitive() || mapKeyClass.isEnum()
-                || "String".equals(mapKey.getClass().getSimpleName())) {
-            copyMapKey = mapKey;
-        } else if (mapKey.getClass().isArray()) {
-            copyMapKey = getCloneObjectOfArrayType(mapKey);
-        } else if (Collection.class.isAssignableFrom(mapKey.getClass())) {
-            copyMapKey = getCloneObjectOfCollectionType(mapKey);
-        } else if (Map.class.isAssignableFrom(mapKey.getClass())) {
-            copyMapKey = getCloneObjectOfMapType(mapKey);
-        } else {
-            copyMapKey = deepCopy(mapKey);
-        }
-
-        return copyMapKey;
-    }
-
-    private static Object getMapValue(Object mapValue) {
-        Object copyMapValue;
-        String mapValueType = mapValue.getClass().getTypeName();
-        Class mapValueClass = getObjectClass(mapValueType);
-
-        if (mapValueClass.isPrimitive() || mapValueClass.isEnum()
-                || "String".equals(mapValue.getClass().getSimpleName())) {
-            copyMapValue = mapValue;
-        } else if (mapValue.getClass().isArray()) {
-            copyMapValue = getCloneObjectOfArrayType(mapValue);
-        } else if (Collection.class.isAssignableFrom(mapValue.getClass())) {
-            copyMapValue = getCloneObjectOfCollectionType(mapValue);
-        } else if (Map.class.isAssignableFrom(mapValue.getClass())) {
-            copyMapValue = getCloneObjectOfMapType(mapValue);
-        } else {
-            copyMapValue = deepCopy(mapValue);
-        }
-
-        return copyMapValue;
-    }
-
-    private static Object getCloneObjectOfArrayType(Object original) {
-        Object copyObject;
+    private static <T> T getCloneObjectOfArrayType(T original) {
         int arrayLength = Array.getLength(original);
         String theClassName = original.getClass().getComponentType().getTypeName();
-        Class arrayClass = getObjectClass(theClassName);
+        Class<?> arrayClass = getObjectClass(theClassName);
 
-        copyObject = Array.newInstance(arrayClass, arrayLength);
+        T copyObject = (T) Array.newInstance(arrayClass, arrayLength);
 
-        if ("String".equals(arrayClass.getSimpleName()) || arrayClass.isPrimitive()) {
+        if (isObjectPrimitiveOrString(original.getClass())) {
             System.arraycopy(original, 0, copyObject, 0, arrayLength);
         } else {
             for (int index = 0; index < arrayLength; index++) {
@@ -168,32 +104,64 @@ class CopyUtils {
         return copyObject;
     }
 
-    private static Object getCloneObjectOfCollectionType(Object original) {
-        Collection<Object> subObject = (Collection<Object>) original;
-        Collection<Object> copyCollection = createNewObject(subObject);
-        Object collectionItem = subObject.iterator().next();
-        String collectionType = collectionItem.getClass().getTypeName();
-        Class collectionClass = getObjectClass(collectionType);
+    private static <T> Collection<T> getCloneObjectOfCollectionType(T original) {
+        Collection<T> subObject = (Collection<T>) original;
+        Collection<T> copyCollection = createNewObject(subObject);
 
-        if ("String".equals(collectionItem.getClass().getSimpleName()) || collectionClass.isPrimitive()) {
-            assert !isNull.test(copyCollection);
+        if (isObjectPrimitiveOrString(original.getClass())) {
+            assert !isNull(copyCollection);
 
             copyCollection.addAll(subObject);
 
             return copyCollection;
         } else {
-            Stream collectionStream = subObject.stream();
-            collectionStream.forEach(
-                    itemValue -> {
-                        copyCollection.add(deepCopy(itemValue));
-                    });
+            for (T itemValue : subObject) {
+                copyCollection.add(deepCopy(itemValue));
+            }
 
             return copyCollection;
         }
     }
 
-    private static <T> T createNewObject(Object original) {
-        Constructor[] declaredConstructors = original.getClass().getDeclaredConstructors();
+    private static <K> K getMapKey(K mapKey) {
+        K copyMapKey;
+
+        if (isObjectPrimitiveOrString(mapKey.getClass())) {
+            copyMapKey = mapKey;
+        } else if (isObjectArrayOrCollection(mapKey.getClass())) {
+            copyMapKey = getObjectArrayOrCollectionType(mapKey);
+        } else {
+            copyMapKey = deepCopy(mapKey);
+        }
+
+        return copyMapKey;
+    }
+
+    private static <V> V getMapValue(V mapValue) {
+        V copyMapValue;
+
+        if (isObjectPrimitiveOrString(mapValue.getClass())) {
+            copyMapValue = mapValue;
+        } else if (isObjectArrayOrCollection(mapValue.getClass())) {
+            copyMapValue = getObjectArrayOrCollectionType(mapValue);
+        } else {
+            copyMapValue = deepCopy(mapValue);
+        }
+
+        return copyMapValue;
+    }
+
+    private static <K, V> K getKeyFromValue(Map<K, V> originalMap, V value) {
+        for (K mapKey : originalMap.keySet()) {
+            if (originalMap.get(mapKey).equals(value)) {
+                return mapKey;
+            }
+        }
+        throw new DeepCopyException("Error while Map get key from value for copy");
+    }
+
+    private static <T> T createNewObject(T original) {
+        Constructor<?>[] declaredConstructors = original.getClass().getDeclaredConstructors();
         try {
             if (hasDefaultConstructor(declaredConstructors)) {
                 return createNewObjectWithDefaultConstructor(original);
@@ -206,17 +174,16 @@ class CopyUtils {
         }
     }
 
-    private static <T> T createNewObjectWithDefaultConstructor(Object original) throws IllegalAccessException,
+    private static <T> T createNewObjectWithDefaultConstructor(T original) throws IllegalAccessException,
             InvocationTargetException, InstantiationException, NoSuchMethodException {
-
-        Constructor declaredConstructor = original.getClass().getDeclaredConstructor();
+        Constructor<T> declaredConstructor = (Constructor<T>) original.getClass().getDeclaredConstructor();
         declaredConstructor.setAccessible(true);
 
-        return (T) declaredConstructor.newInstance();
-
+        return declaredConstructor.newInstance();
     }
 
-    private static <T> T createNewObjectWithOutDefaultConstructor(Object original, Constructor objectConstructor) throws IllegalAccessException, InvocationTargetException, InstantiationException {
+    private static <T> T createNewObjectWithOutDefaultConstructor(T original, Constructor<?> objectConstructor)
+            throws IllegalAccessException, InvocationTargetException, InstantiationException {
         Field[] objectFields = original.getClass().getDeclaredFields();
         List<Object> fieldsValue = new ArrayList<>();
 
@@ -230,15 +197,6 @@ class CopyUtils {
         }
 
         return (T) objectConstructor.newInstance(fieldsValue.toArray());
-    }
-
-    private static boolean hasDefaultConstructor(Constructor[] constructors) {
-        for (Constructor constructor : constructors) {
-            if (constructor.getGenericParameterTypes().length == 0) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static void insertValue(Object clone, Field cloningField, Object copySubObject) {
@@ -263,40 +221,52 @@ class CopyUtils {
 
     private static Class<?> getObjectClass(String className) {
         try {
-            switch (className) {
-                case "byte":
-                    return byte.class;
-                case "java.lang.Byte":
-                    return byte.class;
-                case "short":
-                    return short.class;
-                case "java.lang.Short":
-                    return short.class;
-                case "int":
-                    return int.class;
-                case "java.lang.Integer":
-                    return int.class;
-                case "long":
-                    return long.class;
-                case "java.lang.Long":
-                    return long.class;
-                case "double":
-                    return double.class;
-                case "java.lang.Double":
-                    return double.class;
-                case "float":
-                    return float.class;
-                case "java.lang.Float":
-                    return float.class;
-                case "char":
-                    return char.class;
-                case "java.lang.Character":
-                    return char.class;
-                default:
-                    return Class.forName(className);
+            if ("byte".equals(className) || "java.lang.Byte".equals(className)) {
+                return byte.class;
+            } else if ("short".equals(className) || "java.lang.Short".equals(className)) {
+                return short.class;
+            } else if ("int".equals(className) || "java.lang.Integer".equals(className)) {
+                return int.class;
+            } else if ("long".equals(className) || "java.lang.Long".equals(className)) {
+                return long.class;
+            } else if ("double".equals(className) || "java.lang.Double".equals(className)) {
+                return double.class;
+            } else if ("float".equals(className) || "java.lang.Float".equals(className)) {
+                return float.class;
+            } else if ("char".equals(className) || "java.lang.Character".equals(className)) {
+                return char.class;
+            } else {
+                return Class.forName(className);
             }
         } catch (ClassNotFoundException e) {
             throw new DeepCopyException("Error while getting the instance class name for copy", e);
         }
+    }
+
+    private static boolean isNull(Object object) {
+        return object == null;
+    }
+
+    private static boolean isObjectPrimitiveOrString(Class<?> originalObjectClass) {
+        if (!originalObjectClass.isArray()) {
+            return originalObjectClass.isPrimitive() || "String".equals(originalObjectClass.getSimpleName());
+        }
+
+        return false;
+    }
+
+    private static boolean isObjectArrayOrCollection(Class<?> originalObjectClass) {
+        return originalObjectClass.isArray() || Map.class.isAssignableFrom(originalObjectClass) ||
+                Collection.class.isAssignableFrom(originalObjectClass);
+    }
+
+    private static boolean hasDefaultConstructor(Constructor[] constructors) {
+        for (Constructor constructor : constructors) {
+            if (constructor.getGenericParameterTypes().length == 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

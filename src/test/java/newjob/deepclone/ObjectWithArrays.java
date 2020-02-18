@@ -36,13 +36,12 @@ public class ObjectWithArrays {
 
     @Override
     public String toString() {
-        return "newjob.deepclone.ArraysClass{" +
+        return "ObjectWithArrays{" +
                 "testPrimitiveArray=" + Arrays.toString(testPrimitiveArray) +
                 ", testStringArray=" + Arrays.toString(testStringArray) +
                 ", testObjectArray=" + Arrays.toString(testObjectArray) +
                 '}';
     }
-
 
     @Override
     public boolean equals(Object o) {

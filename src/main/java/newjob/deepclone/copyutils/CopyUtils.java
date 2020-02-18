@@ -1,4 +1,6 @@
-package newjob.deepclone;
+package newjob.deepclone.copyutils;
+
+import newjob.deepclone.exception.DeepCopyException;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
@@ -8,9 +10,9 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-class CopyUtils {
+public class CopyUtils {
 
-    static <T> T deepCopy(T originalObject) {
+    public static <T> T deepCopy(T originalObject) {
         Set<T> deepCopyObjectSet = new HashSet<>();
         Supplier<Stream<T>> streamSupplier = () -> (Stream<T>) deepCopyObjectSet.stream();
         boolean copyObject = false;

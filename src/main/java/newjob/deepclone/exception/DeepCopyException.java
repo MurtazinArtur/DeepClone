@@ -1,4 +1,4 @@
-package newjob.deepclone;
+package newjob.deepclone.exception;
 
 public class DeepCopyException extends RuntimeException{
     public DeepCopyException(String message) {

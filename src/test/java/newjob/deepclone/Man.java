@@ -3,7 +3,7 @@ package newjob.deepclone;
 import java.util.List;
 import java.util.Objects;
 
-class Man {
+public class Man {
     private String name;
     private int age;
     private Sex sex;

@@ -1,5 +1,7 @@
 package newjob.deepclone;
 
+import newjob.deepclone.copyutils.CopyUtils;
+import newjob.deepclone.exception.DeepCopyException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CopyUtilsTest {
-    private CopyUtils copyUtils;
     private Man originalMan;
     private Man manTwo;
     private ObjectWithArrays originalArray;
@@ -22,7 +23,6 @@ class CopyUtilsTest {
 
     @BeforeEach
     void setUp() {
-        copyUtils = new CopyUtils();
 
         List<String> originalList = new ArrayList<>();
         originalList.add("How I do it?");
@@ -88,7 +88,7 @@ class CopyUtilsTest {
 
         int[] copy = CopyUtils.deepCopy(ints);
 
-        assertEquals(ints, copy);
+        assertEquals(Arrays.toString(ints), Arrays.toString(copy));
 
         ints = new int[]{4, 5, 6};
 
@@ -105,12 +105,12 @@ class CopyUtilsTest {
 
         String[] copy = CopyUtils.deepCopy(strings);
 
-        assertEquals(strings, copy);
+        assertEquals(Arrays.toString(strings), Arrays.toString(copy));
 
         strings[0] = "Воздух";
         strings[1] = "Огонь";
 
-        assertNotEquals(strings, copy);
+        assertNotEquals(Arrays.toString(strings), Arrays.toString(copy));
 
         System.out.println("Changed original string array: " + Arrays.toString(strings));
         System.out.println("Deep Copy string array: " + Arrays.toString(copy));
@@ -123,7 +123,7 @@ class CopyUtilsTest {
 
         Man[] copy = CopyUtils.deepCopy(mans);
 
-        assertEquals(mans, copy);
+        assertEquals(Arrays.toString(mans), Arrays.toString(copy));
 
         Man man = mans[1];
         man.setName("Hermes");
@@ -131,7 +131,7 @@ class CopyUtilsTest {
         man.setSex(Sex.FEMALE);
         man.setFavoriteBooks(null);
 
-        assertNotEquals(mans, copy);
+        assertNotEquals(Arrays.toString(mans), Arrays.toString(copy));
 
         System.out.println("Changed original object array: " + Arrays.toString(mans));
         System.out.println("Deep Copy object array: " + Arrays.toString(copy));
@@ -379,7 +379,7 @@ class CopyUtilsTest {
 
         ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
 
-        assertEquals(copy.getTestPrimitiveArray(), originalArray.getTestPrimitiveArray());
+        assertEquals(Arrays.toString(copy.getTestPrimitiveArray()), Arrays.toString(originalArray.getTestPrimitiveArray()));
 
         originalArray.setTestPrimitiveArray(new int[]{4, 5, 6});
 
@@ -396,12 +396,12 @@ class CopyUtilsTest {
 
         ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
 
-        assertEquals(copy.getTestStringArray(), originalArray.getTestStringArray());
+        assertEquals(Arrays.toString(copy.getTestStringArray()), Arrays.toString(originalArray.getTestStringArray()));
 
         originalArray.getTestStringArray()[0] = "Воздух";
         originalArray.getTestStringArray()[1] = "Огонь";
 
-        assertNotEquals(copy.getTestStringArray(), originalArray.getTestStringArray());
+        assertNotEquals(Arrays.toString(copy.getTestStringArray()), Arrays.toString(originalArray.getTestStringArray()));
 
         System.out.println("Changed original object: " + originalArray);
         System.out.println("DeepCopy object: " + copy);
@@ -414,7 +414,7 @@ class CopyUtilsTest {
 
         ObjectWithArrays copy = CopyUtils.deepCopy(originalArray);
 
-        assertEquals(copy.getTestObjectArray(), originalArray.getTestObjectArray());
+        assertEquals(Arrays.toString(copy.getTestObjectArray()), Arrays.toString(originalArray.getTestObjectArray()));
 
         Man man = (Man) originalArray.getTestObjectArray()[1];
         man.setName("Hermes");
@@ -422,7 +422,7 @@ class CopyUtilsTest {
         man.setSex(Sex.FEMALE);
         man.setFavoriteBooks(null);
 
-        assertNotEquals(copy.getTestObjectArray(), originalArray.getTestObjectArray());
+        assertNotEquals(Arrays.toString(copy.getTestObjectArray()), Arrays.toString(originalArray.getTestObjectArray()));
 
         System.out.println("Changed original object: " + originalArray);
         System.out.println("DeepCopy object: " + copy);
